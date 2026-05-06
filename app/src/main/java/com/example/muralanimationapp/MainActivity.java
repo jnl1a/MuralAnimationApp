@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     private GLSurfaceView surfaceView;
     private Session session;
     private boolean videoLaunched = false;
+    private String lastDetectedMural = "";
 
     // Camera background rendering
     private int cameraTextureId = -1;
@@ -121,7 +122,8 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     @Override
     protected void onResume() {
         super.onResume();
-        videoLaunched = false;
+        // Delay reset to prevent immediately re-triggering same mural
+        surfaceView.postDelayed(() -> videoLaunched = false, 3000);
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -153,18 +155,28 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     private void setupAugmentedImageDatabase() {
         Config config = new Config(session);
         config.setFocusMode(Config.FocusMode.AUTO);
+
         try {
             AssetManager assetManager = getAssets();
-            InputStream inputStream = assetManager.open("ar/1.jpg");
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             AugmentedImageDatabase imageDatabase = new AugmentedImageDatabase(session);
-            imageDatabase.addImage("mural", bitmap, 1.0f); // 1.0f = roughly 1 metre wide
-            imageDatabase.addImage("mural", bitmap);
+
+            for (int i = 1; i <= 9; i++) {
+                try {
+                    InputStream inputStream = assetManager.open("ar/" + i + ".jpg");
+                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    imageDatabase.addImage("mural_" + i, bitmap, 1.0f);
+                    Log.d(TAG, "Successfully loaded mural_" + i);
+                } catch (Exception e) {
+                    Log.w(TAG, "Skipping mural_" + i + " - insufficient quality or missing: " + e.getMessage());
+                }
+            }
+
             config.setAugmentedImageDatabase(imageDatabase);
-            Log.d(TAG, "Image database set up successfully");
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to load mural image", e);
+            Log.d(TAG, "Image database setup complete");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to set up image database", e);
         }
+
         session.configure(config);
     }
 
@@ -272,18 +284,23 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
             Collection<AugmentedImage> images =
                     frame.getUpdatedTrackables(AugmentedImage.class);
 
-            Log.d(TAG, "Trackables found: " + images.size());
-
             for (AugmentedImage image : images) {
-                Log.d(TAG, "Image: " + image.getName()
-                        + " state: " + image.getTrackingState());
+                if (image.getTrackingState() == TrackingState.TRACKING
+                        && image.getName().startsWith("mural_")
+                        && !videoLaunched
+                        && !image.getName().equals(lastDetectedMural)) {
 
-                if ((image.getTrackingState() == TrackingState.TRACKING ||
-                        image.getTrackingState() == TrackingState.PAUSED)
-                        && image.getName().equals("mural")) {
+                    String detectedName = image.getName();
+                    String videoFile = detectedName.replace("mural_", "") + ".mp4";
+
+                    Log.d(TAG, "Detected: " + detectedName + " launching: " + videoFile);
+
                     videoLaunched = true;
+                    lastDetectedMural = detectedName;
+
                     runOnUiThread(() -> {
                         Intent intent = new Intent(MainActivity.this, VideoActivity.class);
+                        intent.putExtra("VIDEO_FILE", videoFile);
                         startActivity(intent);
                     });
                     return;

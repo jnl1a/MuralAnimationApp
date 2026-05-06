@@ -31,8 +31,11 @@ public class VideoActivity extends AppCompatActivity {
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
 
-        // Load video from assets
-        Uri videoUri = Uri.parse("asset:///1.mp4");
+        // Get video filename passed from MainActivity
+        String videoFile = getIntent().getStringExtra("VIDEO_FILE");
+        if (videoFile == null) videoFile = "1.mp4"; // fallback
+
+        Uri videoUri = Uri.parse("asset:///" + videoFile);
         MediaItem mediaItem = MediaItem.fromUri(videoUri);
         player.setMediaItem(mediaItem);
         player.prepare();
