@@ -43,4 +43,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+
+    // ARCore
+    implementation("com.google.ar:core:1.54.0")
+
+    // ExoPlayer for video playback
+    implementation("androidx.media3:media3-exoplayer:1.10.0")
+    implementation("androidx.media3:media3-ui:1.10.0")
+
+
 }
