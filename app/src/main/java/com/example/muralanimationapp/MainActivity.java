@@ -10,6 +10,7 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     private static final String TAG = "MuralApp";
     private GLSurfaceView surfaceView;
     private Session session;
+    private boolean isScanning = false;
     private boolean videoLaunched = false;
     private String lastDetectedMural = "";
     private final Runnable resetRunnable = () -> videoLaunched = false;
@@ -98,6 +100,18 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
         surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
         requestCameraPermission();
+
+        // Start Scanning button
+        Button btnScan = findViewById(R.id.btnScan);
+        btnScan.setOnClickListener(v -> {
+            isScanning = true;
+            videoLaunched = false;
+            lastDetectedMural = "";
+            btnScan.setText("🔍 Scanning...");
+            btnScan.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                            android.graphics.Color.parseColor("#4ECDC4")));
+        });
     }
 
     private void requestCameraPermission() {
@@ -123,9 +137,11 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     @Override
     protected void onResume() {
         super.onResume();
+        isScanning = false;
+        videoLaunched = false;
         // Delay reset to prevent immediately re-triggering same mural
         surfaceView.removeCallbacks(resetRunnable);
-        surfaceView.postDelayed(resetRunnable, 3000);
+        //surfaceView.postDelayed(resetRunnable, 3000);
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -152,6 +168,16 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
                  com.google.ar.core.exceptions.CameraNotAvailableException e) {
             Log.e(TAG, "ARCore unavailable", e);
         }
+        // Button
+        runOnUiThread(() -> {
+            Button btnScan = findViewById(R.id.btnScan);
+            if (btnScan != null) {
+                btnScan.setText("🎨 Start Scanning");
+                btnScan.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(
+                                android.graphics.Color.parseColor("#FF6B6B")));
+            }
+        });
     }
 
     private void setupAugmentedImageDatabase() {
@@ -290,6 +316,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
                 if (image.getTrackingState() == TrackingState.TRACKING
                         && image.getName().startsWith("mural_")
                         && !videoLaunched
+                        && isScanning
                         && !image.getName().equals(lastDetectedMural)) {
 
                     String detectedName = image.getName();
