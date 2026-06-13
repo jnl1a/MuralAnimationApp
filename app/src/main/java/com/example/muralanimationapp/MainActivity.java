@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     private Session session;
     private boolean videoLaunched = false;
     private String lastDetectedMural = "";
+    private final Runnable resetRunnable = () -> videoLaunched = false;
 
     // Camera background rendering
     private int cameraTextureId = -1;
@@ -123,7 +124,8 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     protected void onResume() {
         super.onResume();
         // Delay reset to prevent immediately re-triggering same mural
-        surfaceView.postDelayed(() -> videoLaunched = false, 3000);
+        surfaceView.removeCallbacks(resetRunnable);
+        surfaceView.postDelayed(resetRunnable, 3000);
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {

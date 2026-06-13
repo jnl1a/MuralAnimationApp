@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">MuralAnimationApp</string>
-    <string name="scan_instruction1">Point camera at the mural</string>
-    <string name="scan_instruction2">← Scan Again</string>
+    <string name="scan_instruction1">Point at a mural to start! 🎨</string>
+    <string name="scan_instruction2">Hold steady until the video plays</string>
+    <string name="scan_instruction3">← Scan Again</string>
+    <string name="scan_instruction4">Point at a mural then tap the button</string>
+    <string name="title">🌊 Mural Magic</string>
+    <string name="start_scan">🎨 Start Scanning</string>
 </resources>

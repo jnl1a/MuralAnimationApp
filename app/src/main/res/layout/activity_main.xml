@@ -2,31 +2,77 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="@color/background">
 
-    <!-- ARCore camera feed renders here -->
     <android.opengl.GLSurfaceView
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- Scanning overlay -->
-    <FrameLayout
-        android:id="@+id/scanningOverlay"
+    <!-- Top banner -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#CC1A1A2E"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="60dp"
-            android:text="@string/scan_instruction1"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:background="#88000000"
-            android:padding="12dp"/>
+            android:layout_gravity="center"
+            android:text="@string/title"
+            android:textColor="@color/accent"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <!-- Scanning frame in center -->
+    <FrameLayout
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:layout_gravity="center">
+
+        <View
+            android:id="@+id/scanCorners"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/scan_border"/>
 
     </FrameLayout>
+
+    <!-- Bottom instruction banner -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#CC1A1A2E"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <Button
+            android:id="@+id/btnScan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FF6B6B"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:text="@string/start_scan"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/scan_instruction4"
+            android:textColor="#AAFFFFFF"
+            android:textSize="13sp"/>
+
+    </LinearLayout>
 
 </FrameLayout>

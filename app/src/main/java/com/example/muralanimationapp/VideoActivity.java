@@ -40,6 +40,15 @@ public class VideoActivity extends AppCompatActivity {
         player.setMediaItem(mediaItem);
         player.prepare();
         player.setPlayWhenReady(true);
+
+        Button btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            if (player != null) {
+                player.stop();
+                player.clearMediaItems();
+            }
+            finish();
+        });
     }
 
     @Override

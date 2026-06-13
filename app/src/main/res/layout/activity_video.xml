@@ -7,16 +7,21 @@
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:keepScreenOn="true"/>
 
+    <!-- Styled back button -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
-        android:text="@string/scan_instruction2"
-        android:backgroundTint="#88000000"
-        android:textColor="#FFFFFF"/>
+        android:backgroundTint="#BBFF6B6B"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="@string/scan_instruction3"
+        android:textColor="@color/white"
+        android:textStyle="bold"/>
 
 </FrameLayout>
