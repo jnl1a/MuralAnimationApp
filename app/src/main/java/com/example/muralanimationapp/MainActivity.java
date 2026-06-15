@@ -26,7 +26,6 @@ import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
 import com.google.ar.core.Coordinates2d;
 import com.google.ar.core.exceptions.UnavailableException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -309,22 +308,22 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
             if (camera.getTrackingState() != TrackingState.TRACKING) return;
 
             // Check for detected mural
-            Collection<AugmentedImage> images =
-                    frame.getUpdatedTrackables(AugmentedImage.class);
+            Collection<AugmentedImage> images = frame.getUpdatedTrackables(AugmentedImage.class);
 
             for (AugmentedImage image : images) {
                 if (image.getTrackingState() == TrackingState.TRACKING
-                        && image.getName().startsWith("mural_")
-                        && !videoLaunched
+                        && image.getTrackingMethod() == AugmentedImage.TrackingMethod.FULL_TRACKING
                         && isScanning
-                        && !image.getName().equals(lastDetectedMural)) {
+                        && !videoLaunched
+                        && image.getName().startsWith("mural_")) {
 
                     String detectedName = image.getName();
                     String videoFile = detectedName.replace("mural_", "") + ".mp4";
 
-                    Log.d(TAG, "Detected: " + detectedName + " launching: " + videoFile);
+                    Log.d(TAG, "FULL_TRACKING on " + detectedName + " -> " + videoFile);
 
                     videoLaunched = true;
+                    isScanning = false;            // stop scanning immediately
                     lastDetectedMural = detectedName;
 
                     runOnUiThread(() -> {
