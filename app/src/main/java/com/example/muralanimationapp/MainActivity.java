@@ -42,6 +42,9 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     private boolean isScanning = false;
     private boolean videoLaunched = false;
     private String lastDetectedMural = "";
+    private boolean viewportChanged = false;
+    private int viewportWidth;
+    private int viewportHeight;
     private final Runnable resetRunnable = () -> videoLaunched = false;
 
     // Camera background rendering
@@ -106,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
             isScanning = true;
             videoLaunched = false;
             lastDetectedMural = "";
-            btnScan.setText("🔍 Scanning...");
+            // btnScan.setText("Scanning...");
         });
     }
 
@@ -135,9 +138,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
         super.onResume();
         isScanning = false;
         videoLaunched = false;
-        // Delay reset to prevent immediately re-triggering same mural
         surfaceView.removeCallbacks(resetRunnable);
-        //surfaceView.postDelayed(resetRunnable, 3000);
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -155,51 +156,85 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
                     finish();
                     return;
                 }
-                session = new Session(this);
-                setupAugmentedImageDatabase();
+
+                // Create the session here (fast), but build the image database on a
+                // background thread so the UI thread never freezes. We keep the
+                // `session` field null until everything is ready, so onDrawFrame()
+                // simply no-ops until then.
+                Session newSession = new Session(this);
+                configureSessionAsync(newSession);
+                return; // resume() happens inside configureSessionAsync, once ready
             }
+
+            // Returning from the video: session already built, this part is instant.
             session.resume();
             surfaceView.onResume();
+            resetScanButton();
+
         } catch (UnavailableException |
                  com.google.ar.core.exceptions.CameraNotAvailableException e) {
             Log.e(TAG, "ARCore unavailable", e);
         }
-        // Button
-        runOnUiThread(() -> {
-            Button btnScan = findViewById(R.id.btnScan);
-            if (btnScan != null) {
-                btnScan.setText("🎨 Start Scanning");
-            }
-        });
     }
 
-    private void setupAugmentedImageDatabase() {
-        Config config = new Config(session);
-        config.setFocusMode(Config.FocusMode.AUTO);
+    private void configureSessionAsync(final Session newSession) {
+        new Thread(() -> {
+            Config config = new Config(newSession);
+            config.setFocusMode(Config.FocusMode.AUTO);
 
-        try {
-            AssetManager assetManager = getAssets();
-            AugmentedImageDatabase imageDatabase = new AugmentedImageDatabase(session);
+            try {
+                AssetManager assetManager = getAssets();
+                AugmentedImageDatabase imageDatabase = new AugmentedImageDatabase(newSession);
 
-            for (int i = 1; i <= 9; i++) {
-                try {
-                    InputStream inputStream = assetManager.open("ar/" + i + ".jpg");
-                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                    imageDatabase.addImage("mural_" + i, bitmap, 1.0f);
-                    Log.d(TAG, "Successfully loaded mural_" + i);
-                } catch (Exception e) {
-                    Log.w(TAG, "Skipping mural_" + i + " - insufficient quality or missing: " + e.getMessage());
+                for (int i = 1; i <= 9; i++) {
+                    try (InputStream inputStream = assetManager.open("ar/" + i + ".jpg")) {
+                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                        Bitmap scaled = downscale(bitmap, 640); // smaller = much faster
+                        imageDatabase.addImage("mural_" + i, scaled, 1.0f);
+                        Log.d(TAG, "Successfully loaded mural_" + i);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Skipping mural_" + i + ": " + e.getMessage());
+                    }
                 }
+
+                config.setAugmentedImageDatabase(imageDatabase);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to set up image database", e);
             }
 
-            config.setAugmentedImageDatabase(imageDatabase);
-            Log.d(TAG, "Image database setup complete");
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to set up image database", e);
-        }
-
-        session.configure(config);
+            // Back on the main thread: configure, resume, then publish the session.
+            runOnUiThread(() -> {
+                try {
+                    newSession.configure(config);
+                    newSession.resume();
+                    surfaceView.onResume();
+                    session = newSession; // now visible to the GL thread
+                    resetScanButton();
+                    Log.d(TAG, "Session ready");
+                } catch (com.google.ar.core.exceptions.CameraNotAvailableException e) {
+                    Log.e(TAG, "Camera not available", e);
+                }
+            });
+        }).start();
     }
+
+    private Bitmap downscale(Bitmap src, int maxDimension) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int largest = Math.max(w, h);
+        if (largest <= maxDimension) return src;
+        float scale = (float) maxDimension / largest;
+        return Bitmap.createScaledBitmap(src,
+                Math.round(w * scale), Math.round(h * scale), true);
+    }
+
+    private void resetScanButton() {
+        Button btnScan = findViewById(R.id.btnScan);
+        if (btnScan != null) {
+            btnScan.setText(R.string.start_scan);
+        }
+    }
+
 
     @Override
     protected void onPause() {
@@ -271,10 +306,9 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
-        if (session != null) {
-            int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            session.setDisplayGeometry(rotation, width, height);
-        }
+        viewportWidth = width;
+        viewportHeight = height;
+        viewportChanged = true;
     }
 
     @Override
@@ -282,6 +316,12 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         if (session == null || videoLaunched) return;
+
+        if (viewportChanged) {
+            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+            session.setDisplayGeometry(rotation, viewportWidth, viewportHeight);
+            viewportChanged = false;
+        }
 
         try {
             session.setCameraTextureName(cameraTextureId);

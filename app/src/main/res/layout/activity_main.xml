@@ -109,14 +109,14 @@
             android:id="@+id/btnScan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/coral"
+            android:backgroundTint="@color/surface"
             android:paddingStart="40dp"
             android:paddingEnd="40dp"
             android:paddingTop="12dp"
             android:paddingBottom="12dp"
             android:stateListAnimator="@null"
             android:text="@string/start_scan"
-            android:textColor="@color/surface"
+            android:textColor="@color/ink"
             android:textSize="18sp"
             android:textStyle="bold" />
         <!--android:background="@drawable/bg_button_primary"-->

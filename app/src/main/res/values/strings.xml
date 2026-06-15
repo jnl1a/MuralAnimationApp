@@ -1,9 +1,13 @@
 <resources>
     <string name="app_name">MuralAnimationApp</string>
-    <string name="scan_instruction1">Point at a mural to start! 🎨</string>
+    <string name="scan_instruction1">Point at a mural to start!</string>
     <string name="scan_instruction2">Hold steady and point at a mural</string>
     <string name="scan_instruction3">← Scan Again</string>
     <string name="scan_instruction4">Tap the button when ready to scan!</string>
-    <string name="title">MURAL MAGIC</string>
-    <string name="start_scan">🎨 Start Scanning</string>
+    <string name="title">✦ MURAL MAGIC ✦</string>
+    <string name="start_scan">◈ Start Scanning</string>
+    <string name="header1">Bring murals</string>
+    <string name="header2">to life ✦</string>
+    <string name="my_animations">◈ My Animations</string>
+    <string name="intro">Point your phone at a mural\nand watch the story play.</string>
 </resources>
