@@ -107,9 +107,6 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
             videoLaunched = false;
             lastDetectedMural = "";
             btnScan.setText("🔍 Scanning...");
-            btnScan.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(
-                            android.graphics.Color.parseColor("#4ECDC4")));
         });
     }
 
@@ -172,9 +169,6 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
             Button btnScan = findViewById(R.id.btnScan);
             if (btnScan != null) {
                 btnScan.setText("🎨 Start Scanning");
-                btnScan.setBackgroundTintList(
-                        android.content.res.ColorStateList.valueOf(
-                                android.graphics.Color.parseColor("#FF6B6B")));
             }
         });
     }
